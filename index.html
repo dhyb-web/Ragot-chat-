@@ -361,7 +361,13 @@ function enter(){
 }
 async function start(){
   const uid=await authP;
-  if(uid&&me.id!==uid){me.id=uid;rooms=rooms.filter(r=>!r.dm);rooms.forEach(r=>{delete r.own});save();localStorage.rg_me=JSON.stringify(me)}
+  if(!uid){
+    authOk=false;me=null;localStorage.removeItem('rg_me');
+    $('app').classList.add('hide');$('login').classList.remove('hide');
+    alert("Connexion Firebase impossible. Vérifie ta connexion internet puis recharge RAGOT.");
+    return;
+  }
+  if(me.id!==uid){me.id=uid;rooms=rooms.filter(r=>!r.dm);rooms.forEach(r=>{delete r.own});save();localStorage.rg_me=JSON.stringify(me)}
   if(!rooms.some(r=>r.id==='ai')){rooms.unshift({id:'ai',name:'Ragot AI',ai:true});save()}
   $('login').classList.add('hide');$('app').classList.remove('hide');
   pushMe();watchUsers();
@@ -852,8 +858,7 @@ async function owner(){
 }
 async function consoleO(){
   showScr('scrO');const b=$('ob');b.innerHTML='';
-  const sa=E('button',isSuper?'':'pri',isSuper?'🛡 Tu es super-admin ✔':'🛡 Devenir super-admin');
-  sa.onclick=async()=>{if(isSuper)return;try{await db.ref('superadmins/'+me.id).set(true);isSuper=true;consoleO()}catch(e){alert('Un super-admin existe déjà.')}};
+  const sa=E('p','',isSuper?'🛡 Tu es super-admin ✔':'🛡 Les droits super-admin sont attribués manuellement et de manière sécurisée depuis Firebase.');
   b.append(sa);
   let v={};try{v=(await db.ref('vault/req').get()).val()||{}}catch(e){b.append(E('p','','Lecture refusée : deviens d’abord super-admin.'))}
   const ks=Object.keys(v).sort((a,c)=>v[c].t-v[a].t);
